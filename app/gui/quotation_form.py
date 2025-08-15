@@ -352,18 +352,7 @@ class QuotationItemsTable(QTableWidget):
         copy_btn = QPushButton("📋")
         copy_btn.setToolTip('Copy item as: "{ItemName} {Color} {W} {H}"')
         copy_btn.setMaximumSize(24, 24)
-        copy_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 10px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-        """)
+        copy_btn.setFont(QFont("Arial", 8))
         copy_btn.clicked.connect(lambda: self.copy_item(row))
         actions_layout.addWidget(copy_btn)
         
@@ -372,18 +361,7 @@ class QuotationItemsTable(QTableWidget):
             linked_btn = QPushButton("🔗")
             linked_btn.setToolTip("Add linked items")
             linked_btn.setMaximumSize(24, 24)
-            linked_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #FF9800;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 10px;
-                }
-                QPushButton:hover {
-                    background-color: #F57C00;
-                }
-            """)
+            linked_btn.setFont(QFont("Arial", 8))
             linked_btn.clicked.connect(lambda: self.show_linked_items_popup(product))
             actions_layout.addWidget(linked_btn)
         
@@ -391,18 +369,7 @@ class QuotationItemsTable(QTableWidget):
         delete_btn = QPushButton("🗑")
         delete_btn.setToolTip("Delete this item")
         delete_btn.setMaximumSize(24, 24)
-        delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 10px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-        """)
+        delete_btn.setFont(QFont("Arial", 8))
         delete_btn.clicked.connect(lambda: self.delete_item(row))
         actions_layout.addWidget(delete_btn)
         
@@ -727,29 +694,13 @@ class QuotationTotalsPanel(QFrame):
     
     def setup_ui(self):
         """Set up the totals panel UI."""
-        self.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
-                                            stop: 0 #2d2d2d, stop: 1 #1e1e1e);
-                border: 2px solid #4CAF50;
-                border-radius: 12px;
-                padding: 20px;
-                margin: 10px;
-            }
-        """)
+        self.setFrameStyle(QFrame.Box)
         
         layout = QVBoxLayout(self)
         
         # Title
         title_label = QLabel("Quotation Totals")
-        title_label.setStyleSheet("""
-            QLabel {
-                color: #4CAF50;
-                font-size: 18px;
-                font-weight: bold;
-                margin-bottom: 15px;
-            }
-        """)
+        title_label.setFont(QFont("Arial", 16, QFont.Bold))
         layout.addWidget(title_label)
         
         # Totals layout
@@ -758,12 +709,12 @@ class QuotationTotalsPanel(QFrame):
         
         # Items Subtotal (ex VAT)
         self.items_subtotal_label = QLabel("0.00 SAR")
-        self.items_subtotal_label.setStyleSheet("color: #ffffff; font-size: 14px; font-weight: bold;")
+        self.items_subtotal_label.setFont(QFont("Arial", 12, QFont.Bold))
         totals_layout.addRow("Items Subtotal (ex VAT):", self.items_subtotal_label)
         
         # Total Item Discounts (display only)
         self.item_discounts_label = QLabel("0.00 SAR")
-        self.item_discounts_label.setStyleSheet("color: #FFA726; font-size: 14px;")
+        self.item_discounts_label.setFont(QFont("Arial", 12))
         totals_layout.addRow("Total Discount (from items):", self.item_discounts_label)
         
         # Additional Discount (header-level)
@@ -788,39 +739,20 @@ class QuotationTotalsPanel(QFrame):
         
         # Subtotal after Discount (ex VAT)
         self.discounted_subtotal_label = QLabel("0.00 SAR")
-        self.discounted_subtotal_label.setStyleSheet("color: #66BB6A; font-size: 14px; font-weight: bold;")
+        self.discounted_subtotal_label.setFont(QFont("Arial", 12, QFont.Bold))
         totals_layout.addRow("Subtotal after Discount (ex VAT):", self.discounted_subtotal_label)
         
         # VAT 15%
         self.vat_label = QLabel("0.00 SAR")
-        self.vat_label.setStyleSheet("color: #FFA726; font-size: 14px; font-weight: bold;")
+        self.vat_label.setFont(QFont("Arial", 12, QFont.Bold))
         totals_layout.addRow("VAT 15%:", self.vat_label)
         
         # Grand Total (inc VAT)
         self.grand_total_label = QLabel("0.00 SAR")
-        self.grand_total_label.setStyleSheet("""
-            color: #4CAF50; 
-            font-size: 20px; 
-            font-weight: bold; 
-            border: 2px solid #4CAF50; 
-            border-radius: 6px; 
-            padding: 8px;
-            background-color: rgba(76, 175, 80, 0.1);
-        """)
+        self.grand_total_label.setFont(QFont("Arial", 14, QFont.Bold))
         totals_layout.addRow("Grand Total (inc VAT):", self.grand_total_label)
         
         layout.addLayout(totals_layout)
-        
-        # Action buttons
-        buttons_layout = QHBoxLayout()
-        
-        self.export_pdf_btn = ModernButton("Export to PDF", "secondary")
-        self.save_btn = ModernButton("Save Quotation", "primary")
-        
-        buttons_layout.addWidget(self.export_pdf_btn)
-        buttons_layout.addWidget(self.save_btn)
-        
-        layout.addLayout(buttons_layout)
     
     def update_totals(self, items_data: List[Dict[str, Any]]):
         """Update totals based on items data."""
@@ -867,21 +799,13 @@ class PaymentsPanel(QFrame):
     
     def setup_ui(self):
         """Set up the payments panel UI."""
-        self.setStyleSheet("""
-            QFrame {
-                background-color: #2d2d2d;
-                border: 1px solid #555555;
-                border-radius: 8px;
-                padding: 10px;
-                margin: 5px;
-            }
-        """)
+        self.setFrameStyle(QFrame.Box)
         
         layout = QVBoxLayout(self)
         
         # Title
         title_label = QLabel("Payments")
-        title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #4CAF50; margin-bottom: 10px;")
+        title_label.setFont(QFont("Arial", 14, QFont.Bold))
         layout.addWidget(title_label)
         
         # Payments table
@@ -1028,7 +952,7 @@ class QuotationForm(QWidget):
         header_layout = QHBoxLayout()
         
         title_label = QLabel("Create New Quotation")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4CAF50;")
+        title_label.setFont(QFont("Arial", 18, QFont.Bold))
         header_layout.addWidget(title_label)
         
         header_layout.addStretch()
@@ -1110,29 +1034,14 @@ class QuotationForm(QWidget):
         
         # Simple totals display (much clearer)
         totals_frame = QFrame()
-        totals_frame.setStyleSheet("""
-            QFrame {
-                background-color: #1a1a1a;
-                border: 3px solid #4CAF50;
-                border-radius: 10px;
-                padding: 15px;
-                margin: 10px 0;
-            }
-        """)
+        totals_frame.setFrameStyle(QFrame.Box)
         
         totals_layout = QVBoxLayout(totals_frame)
         
         # Title
         totals_title = QLabel("QUOTATION TOTALS")
-        totals_title.setStyleSheet("""
-            QLabel {
-                color: #4CAF50;
-                font-size: 18px;
-                font-weight: bold;
-                text-align: center;
-                margin-bottom: 10px;
-            }
-        """)
+        totals_title.setFont(QFont("Arial", 16, QFont.Bold))
+        totals_title.setAlignment(Qt.AlignCenter)
         totals_layout.addWidget(totals_title)
         
         # Create simple totals labels
@@ -1140,33 +1049,10 @@ class QuotationForm(QWidget):
         self.vat_label = QLabel("VAT 15%: 0.00 SAR") 
         self.grand_total_label = QLabel("GRAND TOTAL: 0.00 SAR")
         
-        # Style the labels
-        label_style = """
-            QLabel {
-                color: #ffffff;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 5px;
-                margin: 2px 0;
-            }
-        """
-        
-        grand_total_style = """
-            QLabel {
-                color: #4CAF50;
-                font-size: 20px;
-                font-weight: bold;
-                padding: 10px;
-                margin: 5px 0;
-                border: 2px solid #4CAF50;
-                border-radius: 5px;
-                text-align: center;
-            }
-        """
-        
-        self.subtotal_label.setStyleSheet(label_style)
-        self.vat_label.setStyleSheet(label_style)
-        self.grand_total_label.setStyleSheet(grand_total_style)
+        # Style the labels with fonts
+        self.subtotal_label.setFont(QFont("Arial", 12, QFont.Bold))
+        self.vat_label.setFont(QFont("Arial", 12, QFont.Bold))
+        self.grand_total_label.setFont(QFont("Arial", 14, QFont.Bold))
         
         totals_layout.addWidget(self.subtotal_label)
         totals_layout.addWidget(self.vat_label)

@@ -33,13 +33,24 @@ def main():
         "--onefile",                    # Single executable file
         "--noconsole",                  # No console window
         "--name=CurtainQuoter",         # Executable name
-        "--icon=assets/icon.ico",       # App icon (if available)
-        "--add-data=app/reports;app/reports",  # Include report templates
-        "--add-data=assets;assets",     # Include assets
         "--distpath=dist",              # Output directory
         "--workpath=build",             # Work directory
         "app/main.py"                   # Entry point
     ]
+    
+    # Only add data directories if they exist and have content
+    if Path("assets").exists() and any(Path("assets").iterdir()):
+        cmd.extend(["--add-data", "assets;assets"])
+        print("   Including assets directory")
+    
+    if Path("app/reports").exists() and any(Path("app/reports").iterdir()):
+        cmd.extend(["--add-data", "app/reports;app/reports"])
+        print("   Including reports directory")
+    
+    # Only add icon if it exists
+    if Path("assets/icon.ico").exists():
+        cmd.extend(["--icon", "assets/icon.ico"])
+        print("   Including icon file")
     
     print("🔨 Building executable...")
     print(f"Command: {' '.join(cmd)}")

@@ -24,10 +24,13 @@ class ModernButton(QPushButton):
         
         if size == "large":
             self.setMinimumHeight(50)
+            self.setFont(QFont("Arial", 12, QFont.Bold))
         elif size == "small":
             self.setMinimumHeight(28)
+            self.setFont(QFont("Arial", 9))
         else:
             self.setMinimumHeight(40)
+            self.setFont(QFont("Arial", 10))
         
         # No custom styling - using default Qt appearance
 
@@ -44,7 +47,6 @@ class DashboardCard(QFrame):
         self.setMaximumHeight(160)
         self.setFrameStyle(QFrame.Box)
         
-        # No custom styling - using default Qt appearance
         if clickable:
             self.setCursor(Qt.PointingHandCursor)
         
@@ -62,6 +64,7 @@ class DashboardCard(QFrame):
             header_layout.addWidget(icon_label)
         
         title_label = QLabel(title)
+        title_label.setFont(QFont("Arial", 10, QFont.Bold))
         title_label.setWordWrap(True)
         header_layout.addWidget(title_label)
         header_layout.addStretch()
@@ -70,28 +73,16 @@ class DashboardCard(QFrame):
         
         # Value
         self.value_label = QLabel(str(value))
-        self.value_label.setStyleSheet("""
-            QLabel {
-                color: #4CAF50; 
-                font-size: 28px; 
-                font-weight: bold; 
-                margin: 0px;
-                padding: 0px;
-                background-color: transparent;
-                border: none;
-                line-height: 1.2;
-            }
-        """)
+        self.value_label.setFont(QFont("Arial", 24, QFont.Bold))
         self.value_label.setAlignment(Qt.AlignLeft)
         self.value_label.setWordWrap(False)
-        self.value_label.setAttribute(Qt.WA_TranslucentBackground, False)
         self.value_label.setMinimumHeight(40)
         layout.addWidget(self.value_label)
         
         # Subtitle
         if subtitle:
             subtitle_label = QLabel(subtitle)
-            subtitle_label.setStyleSheet("color: #888888; font-size: 11px; margin-top: 2px;")
+            subtitle_label.setFont(QFont("Arial", 9))
             subtitle_label.setWordWrap(True)
             layout.addWidget(subtitle_label)
         

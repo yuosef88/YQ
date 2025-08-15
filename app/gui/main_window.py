@@ -258,8 +258,8 @@ class ProductDialog(QDialog):
         linked_group = QGroupBox("Linked Items")
         linked_layout = QVBoxLayout(linked_group)
         
-        linked_label = QLabel("Select products that are commonly sold together with this product:")
-        linked_label.setStyleSheet("color: #cccccc; margin-bottom: 5px;")
+        linked_label = QLabel("Linked Products:")
+        linked_label.setFont(QFont("Arial", 10, QFont.Bold))
         linked_layout.addWidget(linked_label)
         
         self.linked_list = QListWidget()
@@ -552,15 +552,7 @@ class MainWindow(QMainWindow):
     def setup_header(self, layout):
         """Set up the application header."""
         header_frame = QFrame()
-        header_frame.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                            stop: 0 #2E7D32, stop: 1 #1B5E20);
-                border: none;
-                border-bottom: 3px solid #1B5E20;
-                padding: 15px;
-            }
-        """)
+        header_frame.setFrameStyle(QFrame.Box)
         header_frame.setFixedHeight(80)
         
         header_layout = QHBoxLayout(header_frame)
@@ -568,41 +560,15 @@ class MainWindow(QMainWindow):
         
         # Company logo and name
         logo_label = QLabel("🏢")
-        logo_label.setStyleSheet("""
-            QLabel {
-                color: white;
-                font-size: 32px;
-                margin-right: 15px;
-                background: transparent;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            }
-        """)
+        logo_label.setFont(QFont("Arial", 24))
         header_layout.addWidget(logo_label)
         
         company_label = QLabel("أظلال")  # Adhlal in Arabic
-        company_label.setStyleSheet("""
-            QLabel {
-                color: white;
-                font-size: 36px;
-                font-weight: bold;
-                background: transparent;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-                margin-right: 10px;
-            }
-        """)
+        company_label.setFont(QFont("Arial", 24, QFont.Bold))
         header_layout.addWidget(company_label)
         
         company_subtitle = QLabel("ADHLAL")
-        company_subtitle.setStyleSheet("""
-            QLabel {
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                background: transparent;
-                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-                letter-spacing: 2px;
-            }
-        """)
+        company_subtitle.setFont(QFont("Arial", 12, QFont.Bold))
         header_layout.addWidget(company_subtitle)
         
         header_layout.addStretch()
@@ -622,23 +588,15 @@ class MainWindow(QMainWindow):
         
         # Welcome section
         welcome_frame = QFrame()
-        welcome_frame.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
-                                            stop: 0 #2d2d2d, stop: 1 #1e1e1e);
-                border: 1px solid #404040;
-                border-radius: 12px;
-                padding: 30px;
-            }
-        """)
+        welcome_frame.setFrameStyle(QFrame.Box)
         welcome_layout = QVBoxLayout(welcome_frame)
         
         welcome_title = QLabel("Welcome to Adhlal Management System")
-        welcome_title.setStyleSheet("color: #4CAF50; font-size: 24px; font-weight: bold;")
+        welcome_title.setFont(QFont("Arial", 18, QFont.Bold))
         welcome_layout.addWidget(welcome_title)
         
         welcome_subtitle = QLabel("Manage your curtain business with ease")
-        welcome_subtitle.setStyleSheet("color: #cccccc; font-size: 16px; margin-top: 10px;")
+        welcome_subtitle.setFont(QFont("Arial", 12))
         welcome_layout.addWidget(welcome_subtitle)
         
         layout.addWidget(welcome_frame)
@@ -676,10 +634,8 @@ class MainWindow(QMainWindow):
         actions_layout.addWidget(new_quote_btn)
         actions_layout.addWidget(manage_customers_btn)
         actions_layout.addWidget(manage_products_btn)
-        actions_layout.addStretch()
         
         layout.addWidget(actions_frame)
-        layout.addStretch()
         
         self.tab_widget.addTab(dashboard_widget, "🏠 Dashboard")
     
@@ -701,7 +657,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout()
         
         title_label = QLabel("Quotations Management")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4CAF50;")
+        title_label.setFont(QFont("Arial", 18, QFont.Bold))
         header_layout.addWidget(title_label)
         
         header_layout.addStretch()
@@ -759,7 +715,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout()
         
         title_label = QLabel("Customers Management")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4CAF50;")
+        title_label.setFont(QFont("Arial", 18, QFont.Bold))
         header_layout.addWidget(title_label)
         
         header_layout.addStretch()
@@ -789,7 +745,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout()
         
         title_label = QLabel("Products Management")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4CAF50;")
+        title_label.setFont(QFont("Arial", 18, QFont.Bold))
         header_layout.addWidget(title_label)
         
         header_layout.addStretch()
@@ -819,7 +775,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout()
         
         title_label = QLabel("Logistics Management")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4CAF50;")
+        title_label.setFont(QFont("Arial", 18, QFont.Bold))
         header_layout.addWidget(title_label)
         
         header_layout.addStretch()
