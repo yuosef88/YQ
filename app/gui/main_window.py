@@ -555,23 +555,26 @@ class MainWindow(QMainWindow):
         header_frame.setStyleSheet("""
             QFrame {
                 background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                            stop: 0 #4CAF50, stop: 1 #2E7D32);
+                                            stop: 0 #2E7D32, stop: 1 #1B5E20);
                 border: none;
+                border-bottom: 3px solid #1B5E20;
                 padding: 15px;
             }
         """)
         header_frame.setFixedHeight(80)
         
         header_layout = QHBoxLayout(header_frame)
+        header_layout.setContentsMargins(20, 15, 20, 15)
         
         # Company logo and name
         logo_label = QLabel("🏢")
         logo_label.setStyleSheet("""
             QLabel {
                 color: white;
-                font-size: 28px;
+                font-size: 32px;
                 margin-right: 15px;
                 background: transparent;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
             }
         """)
         header_layout.addWidget(logo_label)
@@ -580,9 +583,11 @@ class MainWindow(QMainWindow):
         company_label.setStyleSheet("""
             QLabel {
                 color: white;
-                font-size: 32px;
+                font-size: 36px;
                 font-weight: bold;
                 background: transparent;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+                margin-right: 10px;
             }
         """)
         header_layout.addWidget(company_label)
@@ -590,11 +595,12 @@ class MainWindow(QMainWindow):
         company_subtitle = QLabel("ADHLAL")
         company_subtitle.setStyleSheet("""
             QLabel {
-                color: rgba(255, 255, 255, 0.8);
-                font-size: 14px;
-                font-weight: normal;
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
                 background: transparent;
-                margin-left: 10px;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+                letter-spacing: 2px;
             }
         """)
         header_layout.addWidget(company_subtitle)
