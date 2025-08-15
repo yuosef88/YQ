@@ -162,6 +162,73 @@ class ProductSelectorDialog(QDialog):
         super().accept()
 
 
+class DiscountWidget(QWidget):
+    """Widget for entering discounts with type selection."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(4)
+        
+        # Discount type combo
+        self.type_combo = QComboBox()
+        self.type_combo.addItem("Fixed", DiscountType.FIXED)
+        self.type_combo.addItem("%", DiscountType.PERCENT)
+        self.type_combo.setMaximumWidth(50)
+        self.type_combo.currentTextChanged.connect(self.on_type_changed)
+        
+        # Discount value input - simple line edit instead of spinbox
+        self.value_edit = QLineEdit()
+        self.value_edit.setMaximumWidth(60)
+        self.value_edit.setPlaceholderText("0.00")
+        self.value_edit.textChanged.connect(self.on_value_changed)
+        
+        layout.addWidget(self.type_combo)
+        layout.addWidget(self.value_edit)
+        
+        # Store current values
+        self.discount_type = DiscountType.FIXED
+        self.discount_value = Decimal('0')
+        
+    def on_type_changed(self):
+        """Handle discount type change."""
+        self.discount_type = self.type_combo.currentData()
+        self.on_value_changed()
+        
+    def on_value_changed(self):
+        """Handle discount value change."""
+        try:
+            text = self.value_edit.text().strip()
+            if text:
+                self.discount_value = Decimal(text)
+            else:
+                self.discount_value = Decimal('0')
+        except (ValueError, TypeError):
+            self.discount_value = Decimal('0')
+        
+    def get_discount_data(self):
+        """Get current discount data."""
+        return {
+            'type': self.discount_type,
+            'value': self.discount_value
+        }
+        
+    def set_discount_data(self, discount_type: DiscountType, discount_value: Decimal):
+        """Set discount data."""
+        self.discount_type = discount_type
+        self.discount_value = discount_value
+        
+        # Update UI
+        index = self.type_combo.findData(discount_type)
+        if index >= 0:
+            self.type_combo.setCurrentIndex(index)
+        self.value_edit.setText(f"{float(discount_value):.2f}")
+
+
 class QuotationItemsTable(QTableWidget):
     """Enhanced table for quotation items with 14 columns."""
     
@@ -177,6 +244,18 @@ class QuotationItemsTable(QTableWidget):
         
         # Connect signals
         self.cellChanged.connect(self.on_cell_changed)
+        
+        # Set subtle selection colors
+        self.setStyleSheet("""
+            QTableWidget::item:selected {
+                background-color: #e3f2fd;
+                color: #000000;
+            }
+            QTableWidget::item:selected:active {
+                background-color: #bbdefb;
+                color: #000000;
+            }
+        """)
     
     def setup_table(self):
         """Set up the 14-column table structure."""
@@ -194,35 +273,42 @@ class QuotationItemsTable(QTableWidget):
         self.setSelectionBehavior(QTableWidget.SelectRows)
         self.setSortingEnabled(False)
         
+        # Enable horizontal scrolling for full screen usage
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
         # Set column widths
         header = self.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)  # Item
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Color
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # W
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # H
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Area
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Qty
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Total Area
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Unit Price
-        header.setSectionResizeMode(8, QHeaderView.ResizeToContents)  # Discount
-        header.setSectionResizeMode(9, QHeaderView.ResizeToContents)  # Line Total ex VAT
-        header.setSectionResizeMode(10, QHeaderView.ResizeToContents) # VAT
-        header.setSectionResizeMode(11, QHeaderView.ResizeToContents) # Line Total inc VAT
-        header.setSectionResizeMode(12, QHeaderView.Stretch)  # Notes
-        header.setSectionResizeMode(13, QHeaderView.ResizeToContents) # Actions
+        header.setSectionResizeMode(0, QHeaderView.Fixed)  # Item - fixed width
+        header.setSectionResizeMode(1, QHeaderView.Fixed)  # Color - fixed width
+        header.setSectionResizeMode(2, QHeaderView.Fixed)  # W - fixed width
+        header.setSectionResizeMode(3, QHeaderView.Fixed)  # H - fixed width
+        header.setSectionResizeMode(4, QHeaderView.Fixed)  # Area - fixed width
+        header.setSectionResizeMode(5, QHeaderView.Fixed)  # Qty - fixed width
+        header.setSectionResizeMode(6, QHeaderView.Fixed)  # Total Area - fixed width
+        header.setSectionResizeMode(7, QHeaderView.Fixed)  # Unit Price - fixed width
+        header.setSectionResizeMode(8, QHeaderView.Fixed)  # Discount - fixed width
+        header.setSectionResizeMode(9, QHeaderView.Fixed)  # Line Total ex VAT - fixed width
+        header.setSectionResizeMode(10, QHeaderView.Fixed) # VAT - fixed width
+        header.setSectionResizeMode(11, QHeaderView.Fixed) # Line Total inc VAT - fixed width
+        header.setSectionResizeMode(12, QHeaderView.Fixed) # Notes - fixed width
+        header.setSectionResizeMode(13, QHeaderView.Fixed) # Actions - fixed width
         
-        # Set minimum column widths
-        self.setColumnWidth(2, 60)   # W
-        self.setColumnWidth(3, 60)   # H
-        self.setColumnWidth(4, 80)   # Area
-        self.setColumnWidth(5, 50)   # Qty
-        self.setColumnWidth(6, 90)   # Total Area
-        self.setColumnWidth(7, 90)   # Unit Price
-        self.setColumnWidth(8, 100)  # Discount
-        self.setColumnWidth(9, 120)  # Line Total ex VAT
-        self.setColumnWidth(10, 80)  # VAT
-        self.setColumnWidth(11, 120) # Line Total inc VAT
-        self.setColumnWidth(13, 100) # Actions
+        # Set minimum column widths - properly distributed for full screen
+        self.setColumnWidth(0, 207)  # Item - keep as is
+        self.setColumnWidth(1, 80)   # Color - increased from 75px (+5px)
+        self.setColumnWidth(2, 85)   # W - increased from 80px (+5px)
+        self.setColumnWidth(3, 85)   # H - increased from 80px (+5px)
+        self.setColumnWidth(4, 100)  # Area - increased from 95px (+5px)
+        self.setColumnWidth(5, 65)   # Qty - increased from 60px (+5px)
+        self.setColumnWidth(6, 110)  # Total Area - increased from 105px (+5px)
+        self.setColumnWidth(7, 120)  # Unit Price - increased from 115px (+5px)
+        self.setColumnWidth(8, 140)  # Discount - increased from 135px (+5px)
+        self.setColumnWidth(9, 140)  # Line Total ex VAT - increased from 135px (+5px)
+        self.setColumnWidth(10, 120) # VAT - increased from 115px (+5px)
+        self.setColumnWidth(11, 140) # Line Total inc VAT - increased from 135px (+5px)
+        self.setColumnWidth(12, 120) # Notes - increased from 115px (+5px)
+        self.setColumnWidth(13, 70)  # Actions - reduced from 135px to 70px (-65px)
         
         # Row height
         self.verticalHeader().setDefaultSectionSize(40)
@@ -246,14 +332,16 @@ class QuotationItemsTable(QTableWidget):
         else:
             unit_price = product.base_unit_price
         
-        # Calculate line totals
+        # Calculate line totals (initially without discount)
         totals = calc_line_totals(
             width=width,
             height=height,
             quantity=quantity,
             unit_type=product.unit_type,
             base_unit_price=product.base_unit_price,
-            variation_price=variation.unit_price_override if variation else None
+            variation_price=variation.unit_price_override if variation else None,
+            discount_type=DiscountType.FIXED,
+            discount_value=Decimal('0')
         )
         
         # Column 0: Item (Product name + variation)
@@ -269,15 +357,15 @@ class QuotationItemsTable(QTableWidget):
         self.setItem(row, 1, color_widget)
         
         # Column 2: Width
-        width_widget = QTableWidgetItem(f"{width:.2f}")
+        width_widget = QTableWidgetItem(f"{width:.3f}")
         self.setItem(row, 2, width_widget)
         
         # Column 3: Height
-        height_widget = QTableWidgetItem(f"{height:.2f}")
+        height_widget = QTableWidgetItem(f"{height:.3f}")
         self.setItem(row, 3, height_widget)
         
         # Column 4: Area (read-only, calculated)
-        area_widget = QTableWidgetItem(f"{totals['area']:.4f}")
+        area_widget = QTableWidgetItem(f"{totals['area']:.3f}")
         area_widget.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
         area_widget.setForeground(QColor("#4CAF50"))
         self.setItem(row, 4, area_widget)
@@ -287,7 +375,7 @@ class QuotationItemsTable(QTableWidget):
         self.setItem(row, 5, qty_widget)
         
         # Column 6: Total Area (read-only, calculated)
-        total_area_widget = QTableWidgetItem(f"{totals['total_area']:.4f}")
+        total_area_widget = QTableWidgetItem(f"{totals['total_area']:.3f}")
         total_area_widget.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
         total_area_widget.setForeground(QColor("#4CAF50"))
         self.setItem(row, 6, total_area_widget)
@@ -296,9 +384,11 @@ class QuotationItemsTable(QTableWidget):
         price_widget = QTableWidgetItem(f"{totals['unit_price']:.2f}")
         self.setItem(row, 7, price_widget)
         
-        # Column 8: Discount (placeholder - will implement complex widget later)
-        discount_widget = QTableWidgetItem("0.00")
-        self.setItem(row, 8, discount_widget)
+        # Column 8: Discount (new widget)
+        discount_widget = DiscountWidget()
+        discount_widget.value_edit.textChanged.connect(lambda: self.recalculate_row(row))
+        discount_widget.type_combo.currentTextChanged.connect(lambda: self.recalculate_row(row))
+        self.setCellWidget(row, 8, discount_widget)
         
         # Column 9: Line Total (ex VAT) - read-only
         line_ex_vat_widget = QTableWidgetItem(f"{totals['line_total_ex_vat']:.2f}")
@@ -317,7 +407,7 @@ class QuotationItemsTable(QTableWidget):
         line_inc_vat_widget.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
         line_inc_vat_widget.setForeground(QColor("#4CAF50"))
         line_inc_vat_widget.setFont(QFont("", 0, QFont.Bold))
-        self.setItem(row, 11, line_inc_vat_widget)
+        self.setItem(row, 11, line_ex_vat_widget)
         
         # Column 12: Notes
         notes_widget = QTableWidgetItem(notes)
@@ -439,19 +529,27 @@ class QuotationItemsTable(QTableWidget):
     
     def recalculate_row(self, row: int):
         """Recalculate totals for a specific row."""
-        if row >= len(self.items_data) or not self.items_data[row]:
-            return
-        
-        item_data = self.items_data[row]
-        product = item_data['product']
-        variation = item_data['variation']
-        
         try:
+            if row >= len(self.items_data) or not self.items_data[row]:
+                return
+            
+            item_data = self.items_data[row]
+            product = item_data['product']
+            
             # Get current values from table
-            width = Decimal(self.item(row, 2).text() or '0')
-            height = Decimal(self.item(row, 3).text() or '0')
+            width = Decimal(self.item(row, 2).text() or '1.0')
+            height = Decimal(self.item(row, 3).text() or '1.0')
             quantity = int(self.item(row, 5).text() or '1')
             unit_price = Decimal(self.item(row, 7).text() or '0')
+            
+            # Get discount data from the DiscountWidget
+            discount_widget = self.cellWidget(row, 8)
+            if discount_widget:
+                discount_type = discount_widget.discount_type
+                discount_value = discount_widget.discount_value
+            else:
+                discount_type = DiscountType.FIXED
+                discount_value = Decimal('0')
             
             # Calculate new totals
             totals = calc_line_totals(
@@ -460,32 +558,20 @@ class QuotationItemsTable(QTableWidget):
                 quantity=quantity,
                 unit_type=product.unit_type,
                 base_unit_price=unit_price,  # Use table value, not base price
-                variation_price=None  # Don't override with variation price
+                variation_price=None,  # Don't override with variation price
+                discount_type=discount_type,
+                discount_value=discount_value
             )
             
-            # Update calculated fields (temporarily disconnect signals)
-            self.cellChanged.disconnect()
+            # Update calculated fields
+            self.item(row, 4).setText(f"{totals['area']:.3f}")  # Area
+            self.item(row, 6).setText(f"{totals['total_area']:.3f}")  # Total Area
+            self.item(row, 9).setText(f"{totals['line_total_ex_vat']:.2f}")  # Line Total ex VAT
+            self.item(row, 10).setText(f"{totals['vat_amount']:.2f}")  # VAT
+            self.item(row, 11).setText(f"{totals['line_total_inc_vat']:.2f}")  # Line Total inc VAT
             
-            # Area
-            self.item(row, 4).setText(f"{totals['area']:.4f}")
-            
-            # Total Area
-            self.item(row, 6).setText(f"{totals['total_area']:.4f}")
-            
-            # Line Total (ex VAT)
-            self.item(row, 9).setText(f"{totals['line_total_ex_vat']:.2f}")
-            
-            # VAT
-            self.item(row, 10).setText(f"{totals['vat_amount']:.2f}")
-            
-            # Line Total (inc VAT)
-            self.item(row, 11).setText(f"{totals['line_total_inc_vat']:.2f}")
-            
-            # Update stored data
+            # Update stored totals
             item_data['totals'] = totals
-            
-            # Reconnect signals
-            self.cellChanged.connect(self.on_cell_changed)
             
             # Emit change signal
             self.item_changed_signal.emit()
@@ -500,9 +586,24 @@ class QuotationItemsTable(QTableWidget):
             if row < len(self.items_data) and self.items_data[row]:
                 try:
                     line_total_ex_vat = Decimal(self.item(row, 9).text() or '0')
+                    
+                    # Get discount data from widget
+                    discount_widget = self.cellWidget(row, 8)
+                    if discount_widget:
+                        discount_amount = Decimal('0')
+                        if discount_widget.discount_type == DiscountType.PERCENT:
+                            # Calculate discount amount from percentage
+                            base_amount = Decimal(self.item(row, 7).text() or '0') * Decimal(self.item(row, 5).text() or '1')
+                            discount_amount = base_amount * (discount_widget.discount_value / Decimal('100'))
+                        else:
+                            # Fixed amount discount
+                            discount_amount = discount_widget.discount_value
+                    else:
+                        discount_amount = Decimal('0')
+                    
                     items.append({
                         'line_total_ex_vat': line_total_ex_vat,
-                        'discount_amount': Decimal('0')  # Individual item discounts
+                        'discount_amount': discount_amount
                     })
                 except (ValueError, TypeError):
                     pass
@@ -524,13 +625,24 @@ class QuotationItemsTable(QTableWidget):
                     color_text = self.item(row, 1).text() if self.item(row, 1) else ""
                     notes_text = self.item(row, 12).text() if self.item(row, 12) else ""
                     
+                    # Get discount data from widget
+                    discount_widget = self.cellWidget(row, 8)
+                    if discount_widget:
+                        discount_type = discount_widget.discount_type
+                        discount_value = discount_widget.discount_value
+                    else:
+                        discount_type = DiscountType.FIXED
+                        discount_value = Decimal('0')
+                    
                     # Update item data with current table values
                     item_data.update({
                         'width': Decimal(width_text),
                         'height': Decimal(height_text), 
                         'quantity': int(qty_text),
                         'color': color_text,
-                        'notes': notes_text
+                        'notes': notes_text,
+                        'discount_type': discount_type,
+                        'discount_value': discount_value
                     })
                     
                 except (ValueError, TypeError, AttributeError) as e:
@@ -541,10 +653,13 @@ class QuotationItemsTable(QTableWidget):
                         'height': Decimal('1.0'),
                         'quantity': 1,
                         'color': '',
-                        'notes': ''
+                        'notes': '',
+                        'discount_type': DiscountType.FIXED,
+                        'discount_value': Decimal('0')
                     })
                 
                 items.append(item_data)
+        
         return items
     
     def has_linked_items(self, product: Product) -> bool:
@@ -682,13 +797,16 @@ class QuotationItemsTable(QTableWidget):
 class QuotationTotalsPanel(QFrame):
     """Panel showing quotation totals with live updates."""
     
+    # Signal for discount changes
+    discount_changed_signal = Signal()
+    
     def __init__(self):
         super().__init__()
         self.setup_ui()
         
         # Initialize values
         self.items_subtotal = Decimal('0')
-        self.header_discount_type = DiscountType.FIXED
+        self.header_discount_type = DiscountType.FIXED  # Always fixed amount
         self.header_discount_value = Decimal('0')
         self.tax_rate = Decimal('0.15')
     
@@ -720,18 +838,16 @@ class QuotationTotalsPanel(QFrame):
         # Additional Discount (header-level)
         discount_layout = QHBoxLayout()
         
-        self.discount_type_combo = StyledComboBox()
-        self.discount_type_combo.addItem("Fixed Amount", DiscountType.FIXED)
-        self.discount_type_combo.addItem("Percentage %", DiscountType.PERCENT)
-        self.discount_type_combo.setMaximumWidth(120)
+        # No need for dropdown since it's always fixed amount
+        discount_label = QLabel("Fixed Amount:")
+        discount_label.setFont(QFont("Arial", 10))
         
         self.discount_value_spin = DecimalSpinBox(decimals=2, minimum=0, maximum=999999)
         self.discount_value_spin.setMaximumWidth(100)
         
-        self.discount_type_combo.currentTextChanged.connect(self.on_discount_changed)
         self.discount_value_spin.valueChanged.connect(self.on_discount_changed)
         
-        discount_layout.addWidget(self.discount_type_combo)
+        discount_layout.addWidget(discount_label)
         discount_layout.addWidget(self.discount_value_spin)
         discount_layout.addStretch()
         
@@ -782,11 +898,11 @@ class QuotationTotalsPanel(QFrame):
     
     def on_discount_changed(self):
         """Handle discount changes."""
-        self.header_discount_type = self.discount_type_combo.currentData()
+        self.header_discount_type = DiscountType.FIXED  # Always fixed amount
         self.header_discount_value = self.discount_value_spin.get_decimal_value()
         
-        # Trigger totals update (will be connected externally)
-        # This is just to store the values
+        # Emit signal to trigger totals update
+        self.discount_changed_signal.emit()
 
 
 class PaymentsPanel(QFrame):
@@ -828,8 +944,8 @@ class PaymentsPanel(QFrame):
         self.paid_label = QLabel("Paid: 0.00 SAR")
         self.balance_label = QLabel("Balance: 0.00 SAR")
         
-        self.paid_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
-        self.balance_label.setStyleSheet("color: #FFA726; font-weight: bold;")
+        self.paid_label.setFont(QFont("Arial", 12, QFont.Bold))
+        self.balance_label.setFont(QFont("Arial", 12, QFont.Bold))
         
         controls_layout.addWidget(self.paid_label)
         controls_layout.addWidget(self.balance_label)
@@ -862,13 +978,7 @@ class PaymentsPanel(QFrame):
                 # Actions
                 delete_btn = QPushButton("×")
                 delete_btn.setMaximumSize(24, 24)
-                delete_btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #f44336; color: white; border: none; border-radius: 4px;
-                        font-weight: bold; font-size: 12px;
-                    }
-                    QPushButton:hover { background-color: #d32f2f; }
-                """)
+                delete_btn.setFont(QFont("Arial", 12, QFont.Bold))
                 delete_btn.clicked.connect(lambda checked, p=payment: self.delete_payment(p))
                 self.payments_table.setCellWidget(row, 4, delete_btn)
             
@@ -1018,7 +1128,7 @@ class QuotationForm(QWidget):
         
         # Items table (no splitter - let it grow naturally)
         items_label = QLabel("Quotation Items")
-        items_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #4CAF50; margin-bottom: 10px;")
+        items_label.setFont(QFont("Arial", 16, QFont.Bold))
         layout.addWidget(items_label)
         
         self.items_table = QuotationItemsTable()
@@ -1032,33 +1142,9 @@ class QuotationForm(QWidget):
         
         layout.addWidget(self.items_table)
         
-        # Simple totals display (much clearer)
-        totals_frame = QFrame()
-        totals_frame.setFrameStyle(QFrame.Box)
-        
-        totals_layout = QVBoxLayout(totals_frame)
-        
-        # Title
-        totals_title = QLabel("QUOTATION TOTALS")
-        totals_title.setFont(QFont("Arial", 16, QFont.Bold))
-        totals_title.setAlignment(Qt.AlignCenter)
-        totals_layout.addWidget(totals_title)
-        
-        # Create simple totals labels
-        self.subtotal_label = QLabel("Subtotal (ex VAT): 0.00 SAR")
-        self.vat_label = QLabel("VAT 15%: 0.00 SAR") 
-        self.grand_total_label = QLabel("GRAND TOTAL: 0.00 SAR")
-        
-        # Style the labels with fonts
-        self.subtotal_label.setFont(QFont("Arial", 12, QFont.Bold))
-        self.vat_label.setFont(QFont("Arial", 12, QFont.Bold))
-        self.grand_total_label.setFont(QFont("Arial", 14, QFont.Bold))
-        
-        totals_layout.addWidget(self.subtotal_label)
-        totals_layout.addWidget(self.vat_label)
-        totals_layout.addWidget(self.grand_total_label)
-        
-        layout.addWidget(totals_frame)
+        # Enhanced totals panel with discount functionality
+        self.totals_panel = QuotationTotalsPanel()
+        layout.addWidget(self.totals_panel)
         
         # Action buttons below totals
         buttons_frame = QFrame()
@@ -1086,6 +1172,7 @@ class QuotationForm(QWidget):
         """Connect UI signals."""
         self.items_table.item_changed_signal.connect(self.update_totals)
         self.items_table.item_copied_signal.connect(self.on_item_copied)
+        self.totals_panel.discount_changed_signal.connect(self.update_totals)
     
     def load_customers(self):
         """Load customers into combo box."""
@@ -1119,25 +1206,13 @@ class QuotationForm(QWidget):
         items_data = self.items_table.get_items_data()
         
         try:
-            # Calculate quotation totals
-            totals = calc_quotation_totals(
-                items_data=items_data,
-                header_discount_type=DiscountType.FIXED,
-                header_discount_value=Decimal('0'),
-                tax_rate=Decimal('0.15')
-            )
-            
-            # Update simple labels directly
-            self.subtotal_label.setText(f"Subtotal (ex VAT): {totals['items_subtotal_ex_vat']:.2f} SAR")
-            self.vat_label.setText(f"VAT 15%: {totals['vat_amount']:.2f} SAR")
-            self.grand_total_label.setText(f"GRAND TOTAL: {totals['grand_total']:.2f} SAR")
+            # Update the totals panel with items data
+            self.totals_panel.update_totals(items_data)
             
         except Exception as e:
             print(f"Error updating totals: {e}")
             # Set default values on error
-            self.subtotal_label.setText("Subtotal (ex VAT): 0.00 SAR")
-            self.vat_label.setText("VAT 15%: 0.00 SAR")
-            self.grand_total_label.setText("GRAND TOTAL: 0.00 SAR")
+            self.totals_panel.update_totals([])
     
     def on_item_copied(self, copied_text: str):
         """Handle item copied to clipboard."""
@@ -1232,7 +1307,9 @@ class QuotationForm(QWidget):
                         quantity=int(item_data.get('quantity', 1)),
                         product_variation_id=item_data.get('variation').id if item_data.get('variation') else None,
                         color_text=item_data.get('color', ''),
-                        notes=item_data.get('notes', '')
+                        notes=item_data.get('notes', ''),
+                        discount_type=item_data.get('discount_type', DiscountType.FIXED),
+                        discount_value=item_data.get('discount_value', Decimal('0'))
                     )
             
             # Update quotation totals

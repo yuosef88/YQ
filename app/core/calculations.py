@@ -9,21 +9,21 @@ from core.models import UnitType, DiscountType
 
 
 def calc_area(width: Decimal, height: Decimal) -> Decimal:
-    """Calculate area from width and height, rounded to 4 decimal places."""
+    """Calculate area from width and height, rounded to 3 decimal places."""
     if not width or not height:
-        return Decimal('0.0000')
+        return Decimal('0.000')
     
     area = width * height
-    return area.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+    return area.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
 
 
 def calc_total_area(area: Decimal, quantity: int) -> Decimal:
-    """Calculate total area from area and quantity, rounded to 4 decimal places."""
+    """Calculate total area from area and quantity, rounded to 3 decimal places."""
     if not area or not quantity:
-        return Decimal('0.0000')
+        return Decimal('0.000')
     
     total_area = area * Decimal(str(quantity))
-    return total_area.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+    return total_area.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
 
 
 def get_base_qty(unit_type: UnitType, width: Decimal, height: Decimal, 

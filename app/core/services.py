@@ -545,7 +545,9 @@ class QuotationService:
     def add_quote_item(quotation_id: int, product_id: int, width: Decimal = None,
                       height: Decimal = None, quantity: int = 1,
                       product_variation_id: int = None, color_text: str = "",
-                      unit_price_override: Decimal = None, notes: str = "") -> Optional[QuoteItem]:
+                      unit_price_override: Decimal = None, notes: str = "",
+                      discount_type: DiscountType = DiscountType.FIXED,
+                      discount_value: Decimal = Decimal('0')) -> Optional[QuoteItem]:
         """Add an item to a quotation."""
         session = get_db_session()
         try:
@@ -578,7 +580,7 @@ class QuotationService:
             else:
                 unit_price = product.base_unit_price
             
-            # Calculate line totals
+            # Calculate line totals with discount
             totals = calc_line_totals(
                 width=width or Decimal('0'),
                 height=height or Decimal('0'),
@@ -586,6 +588,8 @@ class QuotationService:
                 unit_type=product.unit_type,
                 base_unit_price=product.base_unit_price,
                 variation_price=variation.unit_price_override if variation else None,
+                discount_type=discount_type,
+                discount_value=discount_value,
                 tax_rate=quotation.tax_rate
             )
             
@@ -601,6 +605,8 @@ class QuotationService:
                 quantity=quantity,
                 total_area=totals['total_area'],
                 unit_price=totals['unit_price'],
+                discount_type=discount_type,
+                discount_value=discount_value,
                 line_total_ex_vat=totals['line_total_ex_vat'],
                 vat_amount=totals['vat_amount'],
                 line_total_inc_vat=totals['line_total_inc_vat'],
