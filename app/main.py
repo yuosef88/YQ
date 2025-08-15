@@ -35,8 +35,8 @@ def setup_application():
             app.setFont(font)
             break
     
-    # Set application style
-    app.setStyle('Fusion')
+    # Use default application style
+    pass
     
     return app
 

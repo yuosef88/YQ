@@ -110,32 +110,7 @@ class CustomerDialog(QDialog):
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
         
-        # Apply styles
-        self.setStyleSheet("""
-            QDialog { background-color: #1e1e1e; color: #ffffff; }
-            QGroupBox {
-                font-weight: bold; border: 2px solid #404040; border-radius: 8px;
-                margin-top: 10px; padding-top: 10px; color: #cccccc;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin; left: 10px; padding: 0 5px 0 5px; color: #4CAF50;
-            }
-            QLineEdit, QTextEdit {
-                background-color: #404040; border: 1px solid #555555; border-radius: 4px;
-                padding: 8px; color: #ffffff; font-size: 14px;
-            }
-            QLineEdit:focus, QTextEdit:focus {
-                border-color: #4CAF50; background-color: #4a4a4a;
-            }
-            QRadioButton { color: #ffffff; font-size: 14px; }
-            QRadioButton::indicator { width: 18px; height: 18px; }
-            QRadioButton::indicator:unchecked { 
-                border: 2px solid #555555; border-radius: 9px; background-color: #2d2d2d;
-            }
-            QRadioButton::indicator:checked { 
-                border: 2px solid #4CAF50; border-radius: 9px; background-color: #4CAF50;
-            }
-        """)
+        # No custom styling - using default Qt appearance
     
     def on_type_changed(self):
         """Handle customer type change."""
@@ -300,41 +275,7 @@ class ProductDialog(QDialog):
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
         
-        # Apply styles
-        self.setStyleSheet("""
-            QDialog { background-color: #1e1e1e; color: #ffffff; }
-            QGroupBox {
-                font-weight: bold; border: 2px solid #404040; border-radius: 8px;
-                margin-top: 10px; padding-top: 10px; color: #cccccc;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin; left: 10px; padding: 0 5px 0 5px; color: #4CAF50;
-            }
-            QLineEdit, QTextEdit, QComboBox {
-                background-color: #404040; border: 1px solid #555555; border-radius: 4px;
-                padding: 8px; color: #ffffff; font-size: 14px;
-            }
-            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
-                border-color: #4CAF50; background-color: #4a4a4a;
-            }
-            QTableWidget {
-                background-color: #2d2d2d; border: 1px solid #555555; border-radius: 4px;
-                gridline-color: #555555; color: #ffffff;
-            }
-            QTableWidget::item {
-                background-color: #2d2d2d; color: #ffffff; padding: 5px;
-            }
-            QListWidget {
-                background-color: #2d2d2d; border: 1px solid #555555; border-radius: 4px;
-                color: #ffffff;
-            }
-            QListWidget::item {
-                background-color: #2d2d2d; color: #ffffff; padding: 5px;
-            }
-            QListWidget::item:selected {
-                background-color: #4CAF50; color: #ffffff;
-            }
-        """)
+        # No custom styling - using default Qt appearance
         
         # Load linked products
         self.load_linked_products()
@@ -918,65 +859,8 @@ class MainWindow(QMainWindow):
     
     def setup_styles(self):
         """Set up application styles."""
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #1e1e1e;
-                color: #ffffff;
-            }
-            QWidget {
-                background-color: #1e1e1e;
-                color: #ffffff;
-            }
-            QTabWidget::pane {
-                border: 1px solid #404040;
-                background-color: #1e1e1e;
-            }
-            QTabWidget::tab-bar {
-                alignment: left;
-            }
-            QTabBar::tab {
-                background-color: #2d2d2d;
-                color: #cccccc;
-                border: 1px solid #404040;
-                padding: 12px 20px;
-                margin-right: 2px;
-                border-bottom: none;
-            }
-            QTabBar::tab:selected {
-                background-color: #4CAF50;
-                color: #ffffff;
-                border-color: #4CAF50;
-            }
-            QTabBar::tab:hover:!selected {
-                background-color: #3d3d3d;
-            }
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #404040;
-                border-radius: 8px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: #cccccc;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                color: #4CAF50;
-            }
-            QLineEdit, QTextEdit {
-                background-color: #404040;
-                border: 1px solid #555555;
-                border-radius: 4px;
-                padding: 8px;
-                color: #ffffff;
-                font-size: 14px;
-            }
-            QLineEdit:focus, QTextEdit:focus {
-                border-color: #4CAF50;
-                background-color: #4a4a4a;
-            }
-        """)
+        # No custom styling - using default Qt appearance
+        pass
     
     def on_tab_changed(self, index):
         """Handle tab change events."""

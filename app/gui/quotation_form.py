@@ -227,36 +227,7 @@ class QuotationItemsTable(QTableWidget):
         # Row height
         self.verticalHeader().setDefaultSectionSize(40)
         
-        # Style
-        self.setStyleSheet("""
-            QTableWidget {
-                background-color: #2d2d2d;
-                border: 1px solid #404040;
-                border-radius: 8px;
-                gridline-color: #404040;
-                color: #ffffff;
-                selection-background-color: #4CAF50;
-            }
-            QTableWidget::item {
-                padding: 4px;
-                border: none;
-            }
-            QTableWidget::item:selected {
-                background-color: #4CAF50;
-                color: #ffffff;
-            }
-            QTableWidget::item:alternate {
-                background-color: #242424;
-            }
-            QHeaderView::section {
-                background-color: #404040;
-                color: #ffffff;
-                border: 1px solid #555555;
-                font-weight: bold;
-                padding: 6px;
-                font-size: 12px;
-            }
-        """)
+        # No custom styling - using default Qt appearance
     
     def add_item_row(self, product: Product, variation: ProductVariation = None,
                     width: Decimal = None, height: Decimal = None, quantity: int = 1,

@@ -24,96 +24,12 @@ class ModernButton(QPushButton):
         
         if size == "large":
             self.setMinimumHeight(50)
-            font_size = "16px"
         elif size == "small":
             self.setMinimumHeight(28)
-            font_size = "12px"
         else:
             self.setMinimumHeight(40)
-            font_size = "14px"
         
-        base_style = f"""
-            QPushButton {{
-                border: none;
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-size: {font_size};
-                font-weight: 600;
-                text-align: center;
-            }}
-            QPushButton:hover {{
-                opacity: 0.9;
-            }}
-            QPushButton:pressed {{
-                opacity: 0.8;
-            }}
-            QPushButton:disabled {{
-                opacity: 0.6;
-            }}
-        """
-        
-        if style == "primary":
-            color_style = """
-                QPushButton {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                stop: 0 #4CAF50, stop: 1 #2E7D32);
-                    color: white;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                stop: 0 #66BB6A, stop: 1 #388E3C);
-                }
-                QPushButton:pressed {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                stop: 0 #2E7D32, stop: 1 #1B5E20);
-                }
-            """
-        elif style == "danger":
-            color_style = """
-                QPushButton {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                stop: 0 #f44336, stop: 1 #c62828);
-                    color: white;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                stop: 0 #ef5350, stop: 1 #d32f2f);
-                }
-                QPushButton:pressed {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                stop: 0 #c62828, stop: 1 #b71c1c);
-                }
-            """
-        elif style == "secondary":
-            color_style = """
-                QPushButton {
-                    background-color: #6c757d;
-                    color: white;
-                }
-                QPushButton:hover {
-                    background-color: #5a6268;
-                }
-                QPushButton:pressed {
-                    background-color: #545b62;
-                }
-            """
-        else:  # default
-            color_style = """
-                QPushButton {
-                    background-color: #404040;
-                    color: #ffffff;
-                    border: 1px solid #555555;
-                }
-                QPushButton:hover {
-                    background-color: #4a4a4a;
-                    border-color: #666666;
-                }
-                QPushButton:pressed {
-                    background-color: #353535;
-                }
-            """
-        
-        self.setStyleSheet(base_style + color_style)
+        # No custom styling - using default Qt appearance
 
 
 class DashboardCard(QFrame):
@@ -128,27 +44,9 @@ class DashboardCard(QFrame):
         self.setMaximumHeight(160)
         self.setFrameStyle(QFrame.Box)
         
-        card_style = """
-            QFrame {
-                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
-                                            stop: 0 #2d2d2d, stop: 1 #1e1e1e);
-                border: 1px solid #404040;
-                border-radius: 12px;
-                margin: 5px;
-            }
-        """
-        
+        # No custom styling - using default Qt appearance
         if clickable:
-            card_style += """
-                QFrame:hover {
-                    border-color: #4CAF50;
-                    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
-                                                stop: 0 #3d3d3d, stop: 1 #2e2e2e);
-                }
-            """
             self.setCursor(Qt.PointingHandCursor)
-        
-        self.setStyleSheet(card_style)
         
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
@@ -160,12 +58,10 @@ class DashboardCard(QFrame):
         
         if icon:
             icon_label = QLabel(icon)
-            icon_label.setStyleSheet("font-size: 20px; color: #4CAF50; margin-right: 8px;")
             icon_label.setFixedSize(24, 24)
             header_layout.addWidget(icon_label)
         
         title_label = QLabel(title)
-        title_label.setStyleSheet("color: #cccccc; font-size: 13px; font-weight: 600;")
         title_label.setWordWrap(True)
         header_layout.addWidget(title_label)
         header_layout.addStretch()
@@ -231,48 +127,7 @@ class EditableTable(QTableWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSortingEnabled(False)
         
-        # Style the table
-        self.setStyleSheet("""
-            QTableWidget {
-                background-color: #2d2d2d;
-                border: 1px solid #404040;
-                border-radius: 8px;
-                gridline-color: #404040;
-                color: #ffffff;
-                selection-background-color: #4CAF50;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                border: none;
-            }
-            QTableWidget::item:selected {
-                background-color: #4CAF50;
-                color: #ffffff;
-            }
-            QTableWidget::item:alternate {
-                background-color: #242424;
-            }
-            QHeaderView::section {
-                background-color: #404040;
-                color: #ffffff;
-                border: 1px solid #555555;
-                font-weight: bold;
-                padding: 8px;
-            }
-            QScrollBar:vertical {
-                background-color: #2d2d2d;
-                width: 12px;
-                border-radius: 6px;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #4CAF50;
-                border-radius: 6px;
-                min-height: 20px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background-color: #66BB6A;
-            }
-        """)
+        # No custom styling - using default Qt appearance
         
         # Configure header
         header = self.horizontalHeader()
@@ -317,29 +172,7 @@ class DecimalSpinBox(QDoubleSpinBox):
         self.setMaximum(maximum)
         self.setSingleStep(0.01 if decimals > 0 else 1)
         
-        # Style the spin box
-        self.setStyleSheet("""
-            QDoubleSpinBox {
-                background-color: #404040;
-                border: 1px solid #555555;
-                border-radius: 4px;
-                padding: 8px;
-                color: #ffffff;
-                font-size: 14px;
-            }
-            QDoubleSpinBox:focus {
-                border-color: #4CAF50;
-                background-color: #4a4a4a;
-            }
-            QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-                background-color: #555555;
-                border: none;
-                width: 16px;
-            }
-            QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {
-                background-color: #666666;
-            }
-        """)
+        # No custom styling - using default Qt appearance
     
     def get_decimal_value(self) -> Decimal:
         """Get value as Decimal for precise calculations."""
@@ -356,39 +189,7 @@ class StyledComboBox(QComboBox):
     def __init__(self):
         super().__init__()
         
-        self.setStyleSheet("""
-            QComboBox {
-                background-color: #404040;
-                border: 1px solid #555555;
-                border-radius: 4px;
-                padding: 8px;
-                color: #ffffff;
-                font-size: 14px;
-                min-width: 120px;
-            }
-            QComboBox:focus {
-                border-color: #4CAF50;
-                background-color: #4a4a4a;
-            }
-            QComboBox::drop-down {
-                border: none;
-                background-color: #555555;
-                width: 20px;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid #cccccc;
-                margin-right: 5px;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #404040;
-                border: 1px solid #555555;
-                color: #ffffff;
-                selection-background-color: #4CAF50;
-            }
-        """)
+        # No custom styling - using default Qt appearance
 
 
 class ImageLabel(QLabel):
@@ -401,18 +202,7 @@ class ImageLabel(QLabel):
         self.image_size = size
         self.setFixedSize(*size)
         self.setAlignment(Qt.AlignCenter)
-        self.setStyleSheet("""
-            QLabel {
-                border: 2px dashed #555555;
-                border-radius: 8px;
-                background-color: #2d2d2d;
-                color: #888888;
-            }
-            QLabel:hover {
-                border-color: #4CAF50;
-                background-color: #3d3d3d;
-            }
-        """)
+        # No custom styling - using default Qt appearance
         self.setText("Click to\nselect image")
         self.setCursor(Qt.PointingHandCursor)
         self.current_path = None
