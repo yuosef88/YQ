@@ -88,3 +88,5 @@ class AppPaths:
 
 # Global instance
 app_paths = AppPaths()
+
+
