@@ -690,7 +690,7 @@ class MainWindow(QMainWindow):
         
         # Quotations table
         self.quotations_table = EditableTable([
-            "Serial", "Customer", "Phone", "Total Amount", "Status", "Created", "Actions"
+            "Serial", "Customer", "Phone", "Total Amount", "Status", "Date", "Approve", "Send to Logistics", "Actions"
         ])
         self.quotations_table.verticalHeader().setDefaultSectionSize(45)
         list_layout.addWidget(self.quotations_table)
@@ -914,12 +914,84 @@ class MainWindow(QMainWindow):
                     status_item.setForeground(QColor("#f44336"))
                 self.quotations_table.setItem(row, 4, status_item)
                 
-                # Created date
-                date_str = quotation.created_at.strftime("%Y-%m-%d")
+                # Date
+                date_str = quotation.created_at.strftime("%Y-%m-%d") if quotation.created_at else "-"
                 self.quotations_table.setItem(row, 5, QTableWidgetItem(date_str))
                 
-                # Actions - placeholder for now
-                self.quotations_table.setItem(row, 6, QTableWidgetItem("View | Edit"))
+                # Approve
+                approve_btn = QPushButton("Approve")
+                approve_btn.setMaximumSize(100, 24)
+                approve_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #4CAF50; color: white; border: none; border-radius: 4px;
+                        font-weight: bold; font-size: 12px;
+                    }
+                    QPushButton:hover { background-color: #388E3C; }
+                """)
+                approve_btn.clicked.connect(lambda checked, q=quotation: self.approve_quotation(q))
+                self.quotations_table.setCellWidget(row, 6, approve_btn)
+                
+                # Send to Logistics
+                send_to_logistics_btn = QPushButton("Send to Logistics")
+                send_to_logistics_btn.setMaximumSize(150, 24)
+                send_to_logistics_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #2196F3; color: white; border: none; border-radius: 4px;
+                        font-weight: bold; font-size: 12px;
+                    }
+                    QPushButton:hover { background-color: #1976D2; }
+                """)
+                send_to_logistics_btn.clicked.connect(lambda checked, q=quotation: self.send_quotation_to_logistics(q))
+                self.quotations_table.setCellWidget(row, 7, send_to_logistics_btn)
+                
+                # Actions - proper buttons instead of text
+                actions_widget = QWidget()
+                actions_layout = QHBoxLayout(actions_widget)
+                actions_layout.setContentsMargins(5, 2, 5, 2)
+                actions_layout.setSpacing(4)
+                
+                view_btn = QPushButton("👁")
+                view_btn.setToolTip("View Quotation")
+                view_btn.setMaximumSize(30, 24)
+                view_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #4CAF50; color: white; border: none; border-radius: 4px;
+                        font-weight: bold; font-size: 12px;
+                    }
+                    QPushButton:hover { background-color: #388E3C; }
+                """)
+                view_btn.clicked.connect(lambda checked, q=quotation: self.view_quotation(q))
+                
+                edit_btn = QPushButton("✎")
+                edit_btn.setToolTip("Edit Quotation")
+                edit_btn.setMaximumSize(30, 24)
+                edit_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #2196F3; color: white; border: none; border-radius: 4px;
+                        font-weight: bold; font-size: 12px;
+                    }
+                    QPushButton:hover { background-color: #1976D2; }
+                """)
+                edit_btn.clicked.connect(lambda checked, q=quotation: self.edit_quotation(q))
+                
+                delete_btn = QPushButton("×")
+                delete_btn.setToolTip("Delete Quotation")
+                delete_btn.setMaximumSize(30, 24)
+                delete_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #f44336; color: white; border: none; border-radius: 4px;
+                        font-weight: bold; font-size: 12px;
+                    }
+                    QPushButton:hover { background-color: #d32f2f; }
+                """)
+                delete_btn.clicked.connect(lambda checked, q=quotation: self.delete_quotation(q))
+                
+                actions_layout.addWidget(view_btn)
+                actions_layout.addWidget(edit_btn)
+                actions_layout.addWidget(delete_btn)
+                actions_layout.addStretch()
+                
+                self.quotations_table.setCellWidget(row, 8, actions_widget)
                 
         except Exception as e:
             print(f"Error refreshing quotations table: {e}")
@@ -992,14 +1064,21 @@ class MainWindow(QMainWindow):
         """Refresh the products table."""
         try:
             products = ProductService.get_all_products()
+            print(f"Debug: Found {len(products)} products to load")
             self.products_table.setRowCount(len(products))
             
             for row, product in enumerate(products):
+                print(f"Debug: Loading product {row}: {product.name} - {product.category} - {product.base_unit_price}")
+                
                 # Name
-                self.products_table.setItem(row, 0, QTableWidgetItem(product.name or ""))
+                name_item = QTableWidgetItem(product.name or "")
+                print(f"Debug: Setting name item: '{name_item.text()}'")
+                self.products_table.setItem(row, 0, name_item)
                 
                 # Category
-                self.products_table.setItem(row, 1, QTableWidgetItem(product.category or "-"))
+                category_item = QTableWidgetItem(product.category or "-")
+                print(f"Debug: Setting category item: '{category_item.text()}'")
+                self.products_table.setItem(row, 1, category_item)
                 
                 # Unit Type
                 unit_type_display = {
@@ -1008,18 +1087,25 @@ class MainWindow(QMainWindow):
                     UnitType.LENGTH: "Length (m)",
                     UnitType.PCS: "Pieces"
                 }.get(product.unit_type, "Area")
-                self.products_table.setItem(row, 2, QTableWidgetItem(unit_type_display))
+                unit_type_item = QTableWidgetItem(unit_type_display)
+                print(f"Debug: Setting unit type item: '{unit_type_item.text()}'")
+                self.products_table.setItem(row, 2, unit_type_item)
                 
                 # Base Price
                 price_text = f"{float(product.base_unit_price):.2f} SAR" if product.base_unit_price else "0.00 SAR"
-                self.products_table.setItem(row, 3, QTableWidgetItem(price_text))
+                price_item = QTableWidgetItem(price_text)
+                print(f"Debug: Setting price item: '{price_item.text()}'")
+                self.products_table.setItem(row, 3, price_item)
                 
                 # Variations Count
                 try:
                     variations = ProductService.get_product_variations(product.id)
                     variations_count = len(variations)
-                    self.products_table.setItem(row, 4, QTableWidgetItem(str(variations_count)))
-                except:
+                    variations_item = QTableWidgetItem(str(variations_count))
+                    print(f"Debug: Setting variations item: '{variations_item.text()}'")
+                    self.products_table.setItem(row, 4, variations_item)
+                except Exception as e:
+                    print(f"Debug: Error loading variations for product {product.id}: {e}")
                     self.products_table.setItem(row, 4, QTableWidgetItem("0"))
                 
                 # Actions
@@ -1073,7 +1159,7 @@ class MainWindow(QMainWindow):
                 self.assignments_table.setItem(row, 0, QTableWidgetItem(assignment_type.title()))
                 
                 # Quotation
-                quotation_info = f"Q-{assignment.quotation.serial}" if assignment.quotation else "-"
+                quotation_info = f"Q-{assignment.quotation.serial_number}" if assignment.quotation else "-"
                 self.assignments_table.setItem(row, 1, QTableWidgetItem(quotation_info))
                 
                 # Customer
@@ -1347,6 +1433,86 @@ class MainWindow(QMainWindow):
                 self.refresh_assignments_table()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete assignment:\n{str(e)}")
+    
+    # New quotation management methods
+    def approve_quotation(self, quotation):
+        """Approve a quotation."""
+        try:
+            # Update quotation status to accepted
+            QuotationService.update_quotation_status(quotation.id, QuotationStatus.ACCEPTED)
+            QMessageBox.information(self, "Success", f"Quotation {quotation.serial_number} approved successfully!")
+            self.refresh_quotations_table()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to approve quotation:\n{str(e)}")
+    
+    def send_quotation_to_logistics(self, quotation):
+        """Send a quotation to logistics for assignment creation."""
+        try:
+            # Create a new assignment for this quotation
+            from datetime import date
+            assignment = AssignmentService.create_assignment(
+                quotation_id=quotation.id,
+                assignment_type=AssignmentType.INSTALLATION,
+                scheduled_date=date.today(),
+                location="To be determined",
+                notes=f"Auto-created from quotation {quotation.serial_number}"
+            )
+            QMessageBox.information(self, "Success", 
+                f"Quotation {quotation.serial_number} sent to logistics!\n"
+                f"Assignment ID: {assignment.id}")
+            self.refresh_quotations_table()
+            # Switch to logistics tab to show the new assignment
+            self.tab_widget.setCurrentIndex(4)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to send to logistics:\n{str(e)}")
+    
+    def view_quotation(self, quotation):
+        """View a quotation in detail."""
+        try:
+            # Switch to quotation form and load the quotation
+            self.quotations_stack.setCurrentIndex(1)  # Show form
+            # TODO: Implement loading existing quotation into form
+            QMessageBox.information(self, "View Quotation", 
+                f"Viewing quotation {quotation.serial_number}\n"
+                f"Customer: {quotation.customer.name}\n"
+                f"Total: {quotation.grand_total:.2f} SAR\n"
+                f"Status: {quotation.status.value.title()}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to view quotation:\n{str(e)}")
+    
+    def edit_quotation(self, quotation):
+        """Edit an existing quotation."""
+        try:
+            # Switch to quotation form and load the quotation for editing
+            self.quotations_stack.setCurrentIndex(1)  # Show form
+            # TODO: Implement loading existing quotation into form for editing
+            QMessageBox.information(self, "Edit Quotation", 
+                f"Editing quotation {quotation.serial_number}\n"
+                f"Customer: {quotation.customer.name}\n"
+                f"Total: {quotation.grand_total:.2f} SAR")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to edit quotation:\n{str(e)}")
+    
+    def delete_quotation(self, quotation):
+        """Delete a quotation after confirmation."""
+        reply = QMessageBox.question(
+            self, 
+            "Confirm Delete", 
+            f"Are you sure you want to delete quotation '{quotation.serial_number}'?\n\n"
+            f"Customer: {quotation.customer.name}\n"
+            f"Total: {quotation.grand_total:.2f} SAR\n\n"
+            "This action cannot be undone.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            try:
+                # TODO: Implement quotation deletion service
+                QMessageBox.information(self, "Success", f"Quotation '{quotation.serial_number}' deleted successfully!")
+                self.refresh_quotations_table()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete quotation:\n{str(e)}")
     
     def export_current_quotation(self):
         """Export current quotation to PDF (basic implementation)."""

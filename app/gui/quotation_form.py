@@ -5,7 +5,7 @@ Implements the complete quotation workflow as specified.
 
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
     QTableWidget, QTableWidgetItem, QHeaderView, QPushButton, QLabel,
@@ -407,7 +407,7 @@ class QuotationItemsTable(QTableWidget):
         line_inc_vat_widget.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
         line_inc_vat_widget.setForeground(QColor("#4CAF50"))
         line_inc_vat_widget.setFont(QFont("", 0, QFont.Bold))
-        self.setItem(row, 11, line_ex_vat_widget)
+        self.setItem(row, 11, line_inc_vat_widget)
         
         # Column 12: Notes
         notes_widget = QTableWidgetItem(notes)
@@ -563,12 +563,42 @@ class QuotationItemsTable(QTableWidget):
                 discount_value=discount_value
             )
             
-            # Update calculated fields
-            self.item(row, 4).setText(f"{totals['area']:.3f}")  # Area
-            self.item(row, 6).setText(f"{totals['total_area']:.3f}")  # Total Area
-            self.item(row, 9).setText(f"{totals['line_total_ex_vat']:.2f}")  # Line Total ex VAT
-            self.item(row, 10).setText(f"{totals['vat_amount']:.2f}")  # VAT
-            self.item(row, 11).setText(f"{totals['line_total_inc_vat']:.2f}")  # Line Total inc VAT
+            # Update calculated fields - create new items to avoid ownership issues
+            try:
+                # Area
+                area_item = QTableWidgetItem(f"{totals['area']:.3f}")
+                area_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                area_item.setForeground(QColor("#4CAF50"))
+                self.setItem(row, 4, area_item)
+                
+                # Total Area
+                total_area_item = QTableWidgetItem(f"{totals['total_area']:.3f}")
+                total_area_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                total_area_item.setForeground(QColor("#4CAF50"))
+                self.setItem(row, 6, total_area_item)
+                
+                # Line Total ex VAT
+                line_ex_vat_item = QTableWidgetItem(f"{totals['line_total_ex_vat']:.2f}")
+                line_ex_vat_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                line_ex_vat_item.setForeground(QColor("#66BB6A"))
+                self.setItem(row, 9, line_ex_vat_item)
+                
+                # VAT
+                vat_item = QTableWidgetItem(f"{totals['vat_amount']:.2f}")
+                vat_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                vat_item.setForeground(QColor("#FFA726"))
+                self.setItem(row, 10, vat_item)
+                
+                # Line Total inc VAT
+                line_inc_vat_item = QTableWidgetItem(f"{totals['line_total_inc_vat']:.2f}")
+                line_inc_vat_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                line_inc_vat_item.setForeground(QColor("#4CAF50"))
+                line_inc_vat_item.setFont(QFont("", 0, QFont.Bold))
+                self.setItem(row, 11, line_inc_vat_item)
+                
+            except Exception as e:
+                print(f"Error updating table items for row {row}: {e}")
+                return
             
             # Update stored totals
             item_data['totals'] = totals
@@ -1321,7 +1351,7 @@ class QuotationForm(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to save quotation:\n{str(e)}")
     
     def export_pdf(self):
-        """Export quotation to PDF."""
+        """Export quotation to PDF with professional invoice format."""
         try:
             from PySide6.QtPrintSupport import QPrinter
             from PySide6.QtGui import QTextDocument
@@ -1338,51 +1368,213 @@ class QuotationForm(QWidget):
                 QMessageBox.warning(self, "No Items", "Please add items before exporting PDF.")
                 return
             
-            # Create HTML content
+            # Get totals from the totals panel
+            items_subtotal = Decimal('0')
+            total_discounts = Decimal('0')
+            additional_discount = Decimal('0')
+            
+            for item_data in items_data:
+                if item_data and 'totals' in item_data:
+                    items_subtotal += item_data['totals'].get('line_total_ex_vat', Decimal('0'))
+                    # Calculate item discounts
+                    if item_data.get('discount_type') == DiscountType.PERCENT:
+                        base_amount = item_data.get('totals', {}).get('line_base', Decimal('0'))
+                        discount_amount = base_amount * (item_data.get('discount_value', Decimal('0')) / Decimal('100'))
+                    else:
+                        discount_amount = item_data.get('discount_value', Decimal('0'))
+                    total_discounts += discount_amount
+            
+            # Get additional discount from totals panel
+            if hasattr(self, 'totals_panel'):
+                additional_discount = self.totals_panel.discount_value_spin.get_decimal_value()
+            
+            # Calculate final totals
+            subtotal_after_discounts = max(items_subtotal - additional_discount, Decimal('0'))
+            vat_amount = subtotal_after_discounts * Decimal('0.15')
+            grand_total = subtotal_after_discounts + vat_amount
+            
+            # Generate quotation number
+            quotation_number = f"Q-{datetime.now().strftime('%Y')}-{datetime.now().strftime('%m')}-{len(items_data):03d}"
+            
+            # Create professional HTML content
             html_content = f"""
             <!DOCTYPE html>
             <html>
             <head>
                 <style>
-                    body {{ font-family: Arial, sans-serif; margin: 40px; }}
-                    .header {{ text-align: center; margin-bottom: 30px; }}
-                    .company-name {{ font-size: 24px; font-weight: bold; color: #4CAF50; }}
-                    .quotation-title {{ font-size: 18px; margin: 20px 0; }}
-                    .customer-info {{ margin: 20px 0; }}
-                    .items-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
-                    .items-table th, .items-table td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                    .items-table th {{ background-color: #f2f2f2; }}
-                    .totals {{ float: right; margin: 20px 0; }}
-                    .grand-total {{ font-size: 18px; font-weight: bold; color: #4CAF50; }}
+                    body {{ 
+                        font-family: Arial, sans-serif; 
+                        margin: 30px; 
+                        color: #333;
+                        line-height: 1.4;
+                    }}
+                    .header {{ 
+                        text-align: center; 
+                        margin-bottom: 40px; 
+                        border-bottom: 2px solid #4CAF50;
+                        padding-bottom: 20px;
+                    }}
+                    .company-name {{ 
+                        font-size: 28px; 
+                        font-weight: bold; 
+                        color: #4CAF50; 
+                        margin-bottom: 5px;
+                    }}
+                    .company-tagline {{ 
+                        font-size: 14px; 
+                        color: #666; 
+                        margin-bottom: 10px;
+                    }}
+                    .company-details {{
+                        font-size: 12px;
+                        color: #888;
+                        margin-top: 15px;
+                    }}
+                    .quotation-title {{ 
+                        font-size: 24px; 
+                        font-weight: bold; 
+                        margin: 30px 0; 
+                        text-align: center;
+                        color: #333;
+                    }}
+                    .info-section {{
+                        display: flex;
+                        justify-content: space-between;
+                        margin: 30px 0;
+                    }}
+                    .customer-info, .quotation-info {{
+                        flex: 1;
+                        margin: 0 20px;
+                    }}
+                    .info-label {{
+                        font-weight: bold;
+                        color: #4CAF50;
+                        margin-bottom: 5px;
+                    }}
+                    .items-table {{ 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin: 30px 0; 
+                        font-size: 12px;
+                    }}
+                    .items-table th {{ 
+                        background-color: #f8f9fa; 
+                        border: 1px solid #dee2e6; 
+                        padding: 12px 8px; 
+                        text-align: left; 
+                        font-weight: bold;
+                        color: #495057;
+                    }}
+                    .items-table td {{ 
+                        border: 1px solid #dee2e6; 
+                        padding: 10px 8px; 
+                        text-align: left; 
+                        vertical-align: top;
+                    }}
+                    .items-table tr:nth-child(even) {{
+                        background-color: #f8f9fa;
+                    }}
+                    .totals-section {{
+                        margin: 30px 0;
+                        text-align: right;
+                    }}
+                    .total-row {{
+                        margin: 8px 0;
+                        font-size: 14px;
+                    }}
+                    .total-label {{
+                        display: inline-block;
+                        width: 200px;
+                        text-align: right;
+                        margin-right: 15px;
+                    }}
+                    .total-value {{
+                        display: inline-block;
+                        width: 120px;
+                        text-align: right;
+                        font-weight: bold;
+                    }}
+                    .grand-total {{
+                        font-size: 18px; 
+                        font-weight: bold; 
+                        color: #4CAF50;
+                        border-top: 2px solid #4CAF50;
+                        padding-top: 10px;
+                        margin-top: 10px;
+                    }}
+                    .terms-section {{
+                        margin-top: 50px;
+                        padding: 20px;
+                        background-color: #f8f9fa;
+                        border-left: 4px solid #4CAF50;
+                    }}
+                    .terms-title {{
+                        font-weight: bold;
+                        color: #4CAF50;
+                        margin-bottom: 15px;
+                        font-size: 16px;
+                    }}
+                    .terms-list {{
+                        margin: 0;
+                        padding-left: 20px;
+                    }}
+                    .terms-list li {{
+                        margin: 8px 0;
+                        color: #555;
+                    }}
+                    .footer {{
+                        margin-top: 40px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #888;
+                        border-top: 1px solid #dee2e6;
+                        padding-top: 20px;
+                    }}
                 </style>
             </head>
             <body>
                 <div class="header">
                     <div class="company-name">ADHLAL CURTAIN BUSINESS</div>
-                    <div>Professional Curtain Solutions</div>
+                    <div class="company-tagline">Professional Curtain Solutions & Installation</div>
+                    <div class="company-details">
+                        أطلال للتجارة والتشغيل والصيانة<br>
+                        Tel: +966-XX-XXXXXXX | Email: info@adhlal.com<br>
+                        Address: Riyadh, Saudi Arabia
+                    </div>
                 </div>
                 
                 <div class="quotation-title">QUOTATION</div>
                 
-                <div class="customer-info">
-                    <strong>Customer:</strong> {customer_name}<br>
-                    <strong>Date:</strong> {datetime.now().strftime("%Y-%m-%d")}<br>
-                    <strong>Quotation #:</strong> Q-{datetime.now().strftime("%Y")}-000001
+                <div class="info-section">
+                    <div class="customer-info">
+                        <div class="info-label">CUSTOMER INFORMATION:</div>
+                        <div><strong>Name:</strong> {customer_name}</div>
+                        <div><strong>Date:</strong> {datetime.now().strftime("%B %d, %Y")}</div>
+                        <div><strong>Quotation #:</strong> {quotation_number}</div>
+                    </div>
+                    <div class="quotation-info">
+                        <div class="info-label">QUOTATION DETAILS:</div>
+                        <div><strong>Valid Until:</strong> {(datetime.now() + timedelta(days=30)).strftime("%B %d, %Y")}</div>
+                        <div><strong>Prepared By:</strong> ADHLAL Team</div>
+                        <div><strong>Status:</strong> Draft</div>
+                    </div>
                 </div>
                 
                 <table class="items-table">
                     <tr>
-                        <th>Item</th>
+                        <th>Item Description</th>
                         <th>Color</th>
-                        <th>Dimensions</th>
+                        <th>Dimensions (W×H)</th>
+                        <th>Area (m²)</th>
                         <th>Qty</th>
-                        <th>Unit Price</th>
-                        <th>Total</th>
+                        <th>Total Area (m²)</th>
+                        <th>Unit Price (SAR)</th>
+                        <th>Discount</th>
+                        <th>Line Total (SAR)</th>
                     </tr>
             """
             
             # Add items to HTML
-            total_amount = Decimal('0')
             for item_data in items_data:
                 if item_data and 'product' in item_data:
                     product_name = item_data['product'].name
@@ -1390,44 +1582,78 @@ class QuotationForm(QWidget):
                     width = item_data.get('width', Decimal('0'))
                     height = item_data.get('height', Decimal('0'))
                     quantity = item_data.get('quantity', 1)
-                    
-                    # Get totals from the item_data if available
-                    line_total = item_data.get('totals', {}).get('line_total_inc_vat', Decimal('0'))
+                    area = item_data.get('totals', {}).get('area', Decimal('0'))
+                    total_area = item_data.get('totals', {}).get('total_area', Decimal('0'))
                     unit_price = item_data.get('totals', {}).get('unit_price', Decimal('0'))
+                    line_total = item_data.get('totals', {}).get('line_total_ex_vat', Decimal('0'))
                     
-                    total_amount += line_total
+                    # Format discount display
+                    discount_display = "0.00"
+                    if item_data.get('discount_value', Decimal('0')) > 0:
+                        if item_data.get('discount_type') == DiscountType.PERCENT:
+                            discount_display = f"{float(item_data.get('discount_value', 0)):.1f}%"
+                        else:
+                            discount_display = f"{float(item_data.get('discount_value', 0)):.2f}"
                     
                     html_content += f"""
                     <tr>
-                        <td>{product_name}</td>
+                        <td><strong>{product_name}</strong></td>
                         <td>{color}</td>
-                        <td>{float(width):.2f}m x {float(height):.2f}m</td>
+                        <td>{float(width):.3f}m × {float(height):.3f}m</td>
+                        <td>{float(area):.3f}</td>
                         <td>{quantity}</td>
-                        <td>{float(unit_price):.2f} SAR</td>
-                        <td>{float(line_total):.2f} SAR</td>
+                        <td>{float(total_area):.3f}</td>
+                        <td>{float(unit_price):.2f}</td>
+                        <td>{discount_display}</td>
+                        <td><strong>{float(line_total):.2f}</strong></td>
                     </tr>
                     """
-            
-            # Calculate VAT
-            vat_amount = total_amount * Decimal('0.15') / Decimal('1.15')  # Reverse VAT calculation
-            subtotal = total_amount - vat_amount
             
             html_content += f"""
                 </table>
                 
-                <div class="totals">
-                    <div><strong>Subtotal (ex VAT): {float(subtotal):.2f} SAR</strong></div>
-                    <div><strong>VAT 15%: {float(vat_amount):.2f} SAR</strong></div>
-                    <div class="grand-total"><strong>Grand Total: {float(total_amount):.2f} SAR</strong></div>
+                <div class="totals-section">
+                    <div class="total-row">
+                        <span class="total-label">Items Subtotal (ex VAT):</span>
+                        <span class="total-value">{float(items_subtotal):.2f} SAR</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Total Item Discounts:</span>
+                        <span class="total-value">-{float(total_discounts):.2f} SAR</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Additional Discount:</span>
+                        <span class="total-value">-{float(additional_discount):.2f} SAR</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Subtotal after Discounts (ex VAT):</span>
+                        <span class="total-value">{float(subtotal_after_discounts):.2f} SAR</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">VAT (15%):</span>
+                        <span class="total-value">{float(vat_amount):.2f} SAR</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span class="total-label">GRAND TOTAL:</span>
+                        <span class="total-value">{float(grand_total):.2f} SAR</span>
+                    </div>
                 </div>
                 
-                <div style="margin-top: 50px;">
-                    <p><strong>Terms & Conditions:</strong></p>
-                    <ul>
-                        <li>Quotation valid for 30 days</li>
-                        <li>50% deposit required to start work</li>
-                        <li>Installation included in price</li>
+                <div class="terms-section">
+                    <div class="terms-title">Terms & Conditions:</div>
+                    <ul class="terms-list">
+                        <li>This quotation is valid for 30 days from the date of issue</li>
+                        <li>50% deposit is required to commence work</li>
+                        <li>Installation and delivery are included in the quoted price</li>
+                        <li>Payment terms: 50% advance, 50% upon completion</li>
+                        <li>Warranty: 2 years on materials and workmanship</li>
+                        <li>Lead time: 2-3 weeks from order confirmation</li>
                     </ul>
+                </div>
+                
+                <div class="footer">
+                    <strong>Thank you for choosing ADHLAL Curtain Business!</strong><br>
+                    For any questions, please contact us at info@adhlal.com or call +966-XX-XXXXXXX
                 </div>
             </body>
             </html>
@@ -1440,23 +1666,37 @@ class QuotationForm(QWidget):
             printer = QPrinter()
             printer.setOutputFormat(QPrinter.PdfFormat)
             
+            # Set page margins - PySide6 uses different method signature
+            try:
+                # Try the newer PySide6 method first
+                printer.setPageMargins(20, 20, 20, 20, QPrinter.Millimeter)
+            except TypeError:
+                try:
+                    # Fallback to older method
+                    printer.setPageMargins(20, 20, 20, 20)
+                except:
+                    # If all else fails, use default margins
+                    pass
+            
             # Get save location
             file_path = QFileDialog.getSaveFileName(
                 self, 
                 "Export Quotation to PDF",
-                f"Quotation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                f"Quotation_{quotation_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                 "PDF Files (*.pdf)"
             )[0]
             
             if file_path:
                 printer.setOutputFileName(file_path)
                 document.print_(printer)
-                QMessageBox.information(self, "Success", f"Quotation exported to:\n{file_path}")
+                QMessageBox.information(self, "Success", f"Professional quotation exported to:\n{file_path}")
             
         except ImportError:
             QMessageBox.warning(self, "PDF Export", "PDF export requires additional Qt components.\nPlease install the full PySide6 package.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to export PDF:\n{str(e)}")
+            import traceback
+            traceback.print_exc()
 
 
 if __name__ == "__main__":

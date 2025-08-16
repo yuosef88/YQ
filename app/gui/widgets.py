@@ -118,7 +118,39 @@ class EditableTable(QTableWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSortingEnabled(False)
         
-        # No custom styling - using default Qt appearance
+        # Add better styling to fix highlight visibility issues
+        self.setStyleSheet("""
+            QTableWidget {
+                background-color: #ffffff;
+                alternate-background-color: #f8f9fa;
+                gridline-color: #dee2e6;
+                selection-background-color: #e3f2fd;
+                selection-color: #000000;
+                color: #000000;
+            }
+            QTableWidget::item {
+                color: #000000;
+                background-color: transparent;
+            }
+            QTableWidget::item:selected {
+                background-color: #e3f2fd;
+                color: #000000;
+            }
+            QTableWidget::item:selected:active {
+                background-color: #bbdefb;
+                color: #000000;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: #495057;
+                padding: 8px;
+                border: 1px solid #dee2e6;
+                font-weight: bold;
+            }
+            QHeaderView::section:hover {
+                background-color: #e9ecef;
+            }
+        """)
         
         # Configure header
         header = self.horizontalHeader()

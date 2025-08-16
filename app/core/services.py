@@ -668,6 +668,22 @@ class QuotationService:
             QuotationService._recalculate_quotation_totals(quotation_id, session)
         finally:
             session.close()
+    
+    @staticmethod
+    def update_quotation_status(quotation_id: int, status: QuotationStatus) -> bool:
+        """Update quotation status."""
+        session = get_db_session()
+        try:
+            quotation = session.query(Quotation).filter(Quotation.id == quotation_id).first()
+            if not quotation:
+                return False
+            
+            quotation.status = status
+            quotation.updated_at = datetime.utcnow()
+            session.commit()
+            return True
+        finally:
+            session.close()
 
 
 class PaymentService:
